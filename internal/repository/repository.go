@@ -11,7 +11,7 @@ type Repositories struct {
 
 func NewRepositories(db *sql.DB) *Repositories {
 	return &Repositories{
-		User: &userRepository{db},
-		Post: &postRepository{db},
+		User: NewUserRepository(db),
+		Post: NewPostRepository(db),
 	}
 }
