@@ -25,8 +25,8 @@ type PostRepository interface {
 	Create(context.Context, *entity.Post) error
 }
 
-func (s *postRepository) Create(ctx context.Context, post *entity.Post) error {
-	err := s.db.QueryRowContext(
+func (r *postRepository) Create(ctx context.Context, post *entity.Post) error {
+	err := r.db.QueryRowContext(
 		ctx,
 		query.CreatePost,
 		post.Title,
@@ -40,7 +40,7 @@ func (s *postRepository) Create(ctx context.Context, post *entity.Post) error {
 	)
 
 	if err != nil {
-		return fmt.Errorf("failed to insert post: %w", err)
+		return fmt.Errorf("failed to create post: %w", err)
 	}
 
 	return nil
