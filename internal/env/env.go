@@ -12,6 +12,18 @@ type Config struct {
 	Server struct {
 		Port string `mapstructure:"port"`
 	}
+	Database struct {
+		Driver      string `mapstructure:"driver"`
+		Host        string `mapstructure:"host"`
+		Port        int    `mapstructure:"port"`
+		User        string `mapstructure:"user"`
+		Password    string `mapstructure:"password"`
+		DBName      string `mapstructure:"dbname"`
+		SSLMode     string `mapstructure:"sslmode"`
+		MaxOpenConn int    `mapstructure:"maxopenconn"`
+		MaxIdleConn int    `mapstructure:"maxidleconn"`
+		MaxIdleTime string `mapstructure:"maxidletime"`
+	}
 }
 
 func LoadConfig() (config Config, err error) {
