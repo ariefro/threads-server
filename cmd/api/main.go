@@ -1,10 +1,19 @@
 package main
 
-import "log"
+import (
+	"log"
+
+	"github.com/ariefro/threads-server/internal/env"
+)
 
 func main() {
+	env, err := env.LoadConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	cfg := config{
-		addr: ":8080",
+		addr: env.Server.Port,
 	}
 
 	app := &application{
