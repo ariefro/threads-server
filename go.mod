@@ -5,6 +5,7 @@ go 1.23.3
 require (
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-chi/chi/v5 v5.2.0
+	github.com/lib/pq v1.10.9
 	github.com/spf13/viper v1.19.0
 )
 
