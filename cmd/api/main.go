@@ -6,7 +6,7 @@ import (
 
 	"github.com/ariefro/threads-server/internal/db"
 	"github.com/ariefro/threads-server/internal/env"
-	"github.com/ariefro/threads-server/internal/repository"
+	"github.com/ariefro/threads-server/internal/store"
 )
 
 const version = "0.0.1"
@@ -50,11 +50,11 @@ func main() {
 	defer db.Close()
 	log.Println("database connection pool established")
 
-	repository := repository.NewRepositories(db)
+	store := store.NewStorage(db)
 
 	app := &application{
-		config:     cfg,
-		repository: *repository,
+		config: cfg,
+		store:  *store,
 	}
 
 	mux := app.mount()

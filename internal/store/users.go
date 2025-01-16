@@ -1,4 +1,4 @@
-package repository
+package store
 
 import (
 	"context"
@@ -9,22 +9,22 @@ import (
 	"github.com/ariefro/threads-server/internal/query"
 )
 
-// NewUserRepository creates a new instance of UserRepository implementation
-func NewUserRepository(db *sql.DB) UserRepository {
-	return &userRepository{
+// NewUserStorage creates a new instance of UserStorage implementation
+func NewUserStorage(db *sql.DB) UserStorage {
+	return &userStorage{
 		db: db,
 	}
 }
 
-type userRepository struct {
+type userStorage struct {
 	db *sql.DB
 }
 
-type UserRepository interface {
+type UserStorage interface {
 	Create(context.Context, *entity.User) error
 }
 
-func (r *userRepository) Create(ctx context.Context, user *entity.User) error {
+func (r *userStorage) Create(ctx context.Context, user *entity.User) error {
 	err := r.db.QueryRowContext(
 		ctx,
 		query.CreateUser,

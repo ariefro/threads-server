@@ -1,4 +1,4 @@
-package repository
+package store
 
 import (
 	"context"
@@ -10,22 +10,22 @@ import (
 	"github.com/lib/pq"
 )
 
-// NewPostRepository creates a new instance of PostRepository implementation
-func NewPostRepository(db *sql.DB) PostRepository {
-	return &postRepository{
+// NewPostStorage creates a new instance of PostStorage implementation
+func NewPostStorage(db *sql.DB) PostStorage {
+	return &postStorage{
 		db: db,
 	}
 }
 
-type postRepository struct {
+type postStorage struct {
 	db *sql.DB
 }
 
-type PostRepository interface {
+type PostStorage interface {
 	Create(context.Context, *entity.Post) error
 }
 
-func (r *postRepository) Create(ctx context.Context, post *entity.Post) error {
+func (r *postStorage) Create(ctx context.Context, post *entity.Post) error {
 	err := r.db.QueryRowContext(
 		ctx,
 		query.CreatePost,
