@@ -17,7 +17,7 @@ type Post struct {
 	UserID    int64     `json:"user_id"`
 	Tags      []string  `json:"tags"`
 	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"Updated_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // NewPostStorage creates a new instance of PostStorage implementation
