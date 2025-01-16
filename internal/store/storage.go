@@ -5,13 +5,13 @@ import (
 )
 
 type Storage struct {
-	User UserStorage
-	Post PostStorage
+	Users UserStorage
+	Posts PostStorage
 }
 
 func NewStorage(db *sql.DB) *Storage {
 	return &Storage{
-		User: NewUserStorage(db),
-		Post: NewPostStorage(db),
+		Users: NewUserStorage(db),
+		Posts: NewPostStorage(db),
 	}
 }

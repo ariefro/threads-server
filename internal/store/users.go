@@ -4,10 +4,19 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
-	"github.com/ariefro/threads-server/internal/entity"
 	"github.com/ariefro/threads-server/internal/query"
 )
+
+type User struct {
+	ID        int64     `json:"id"`
+	Username  string    `json:"username"`
+	Email     string    `json:"email"`
+	Password  string    `json:"-"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
 
 // NewUserStorage creates a new instance of UserStorage implementation
 func NewUserStorage(db *sql.DB) UserStorage {
@@ -21,10 +30,10 @@ type userStorage struct {
 }
 
 type UserStorage interface {
-	Create(context.Context, *entity.User) error
+	Create(context.Context, *User) error
 }
 
-func (r *userStorage) Create(ctx context.Context, user *entity.User) error {
+func (r *userStorage) Create(ctx context.Context, user *User) error {
 	err := r.db.QueryRowContext(
 		ctx,
 		query.CreateUser,

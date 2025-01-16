@@ -4,11 +4,21 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
-	"github.com/ariefro/threads-server/internal/entity"
 	"github.com/ariefro/threads-server/internal/query"
 	"github.com/lib/pq"
 )
+
+type Post struct {
+	ID        int64     `json:"id"`
+	Title     string    `json:"title"`
+	Content   string    `json:"content"`
+	UserID    int64     `json:"user_id"`
+	Tags      []string  `json:"tags"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"Updated_at"`
+}
 
 // NewPostStorage creates a new instance of PostStorage implementation
 func NewPostStorage(db *sql.DB) PostStorage {
@@ -22,10 +32,10 @@ type postStorage struct {
 }
 
 type PostStorage interface {
-	Create(context.Context, *entity.Post) error
+	Create(context.Context, *Post) error
 }
 
-func (r *postStorage) Create(ctx context.Context, post *entity.Post) error {
+func (r *postStorage) Create(ctx context.Context, post *Post) error {
 	err := r.db.QueryRowContext(
 		ctx,
 		query.CreatePost,
