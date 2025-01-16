@@ -9,6 +9,8 @@ import (
 	"github.com/ariefro/threads-server/internal/repository"
 )
 
+const version = "0.0.1"
+
 func main() {
 	env, err := env.LoadConfig()
 	if err != nil {
@@ -31,6 +33,7 @@ func main() {
 			maxIdleConns: env.DBMaxIdleConns,
 			maxIdleTime:  env.DBMaxIdleTime,
 		},
+		env: env.AppEnv,
 	}
 
 	db, err := db.NewDBConn(
