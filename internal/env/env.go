@@ -9,21 +9,18 @@ import (
 )
 
 type Config struct {
-	Server struct {
-		Port string `mapstructure:"port"`
-	}
-	Database struct {
-		Driver      string `mapstructure:"driver"`
-		Host        string `mapstructure:"host"`
-		Port        int    `mapstructure:"port"`
-		User        string `mapstructure:"user"`
-		Password    string `mapstructure:"password"`
-		DBName      string `mapstructure:"dbname"`
-		SSLMode     string `mapstructure:"sslmode"`
-		MaxOpenConn int    `mapstructure:"maxopenconn"`
-		MaxIdleConn int    `mapstructure:"maxidleconn"`
-		MaxIdleTime string `mapstructure:"maxidletime"`
-	}
+	AppEnv         string `mapstructure:"APP_ENV"`
+	DBDriver       string `mapstructure:"DB_DRIVER"`
+	DBHost         string `mapstructure:"DB_HOST"`
+	DBPort         int    `mapstructure:"DB_PORT"`
+	DBUser         string `mapstructure:"DB_USER"`
+	DBPassword     string `mapstructure:"DB_PASSWORD"`
+	DBName         string `mapstructure:"DB_NAME"`
+	DBSSLMode      string `mapstructure:"DB_SSL_MODE"`
+	DBMaxOpenConns int    `mapstructure:"DB_MAX_OPEN_CONNS"`
+	DBMaxIdleConns int    `mapstructure:"DB_MAX_IDLE_CONNS"`
+	DBMaxIdleTime  string `mapstructure:"DB_MAX_IDLE_TIME"`
+	AppPort        string `mapstructure:"PORT"`
 }
 
 func LoadConfig() (config Config, err error) {
@@ -32,8 +29,8 @@ func LoadConfig() (config Config, err error) {
 		env = "development" // Default environment
 	}
 
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath("config")
+	viper.SetConfigType("env")
+	viper.AddConfigPath(".")
 	viper.SetConfigName(env)
 
 	err = viper.ReadInConfig()

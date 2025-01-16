@@ -16,20 +16,20 @@ func main() {
 	}
 
 	cfg := config{
-		addr: env.Server.Port,
+		addr: env.AppPort,
 		db: dbConfig{
-			driver: env.Database.Driver,
+			driver: env.DBDriver,
 			dsn: fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
-				env.Database.Host,
-				env.Database.Port,
-				env.Database.User,
-				env.Database.Password,
-				env.Database.DBName,
-				env.Database.SSLMode,
+				env.DBHost,
+				env.DBPort,
+				env.DBUser,
+				env.DBPassword,
+				env.DBName,
+				env.DBSSLMode,
 			),
-			maxOpenConns: env.Database.MaxOpenConn,
-			maxIdleConns: env.Database.MaxIdleConn,
-			maxIdleTime:  env.Database.MaxIdleTime,
+			maxOpenConns: env.DBMaxOpenConns,
+			maxIdleConns: env.DBMaxIdleConns,
+			maxIdleTime:  env.DBMaxIdleTime,
 		},
 	}
 
