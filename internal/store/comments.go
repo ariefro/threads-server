@@ -29,6 +29,7 @@ type commentStorage struct {
 
 type CommentStorage interface {
 	GetByPostID(context.Context, int64) ([]Comment, error)
+	Create(context.Context, *Comment) error
 }
 
 func (s *commentStorage) GetByPostID(ctx context.Context, postID int64) ([]Comment, error) {
@@ -62,4 +63,25 @@ func (s *commentStorage) GetByPostID(ctx context.Context, postID int64) ([]Comme
 	}
 
 	return comments, nil
+}
+
+func (s *commentStorage) Create(ctx context.Context, comment *Comment) error {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	err := s.db.QueryRowContext(
+		ctx,
+		query.CreateComment,
+		comment.PostID,
+		comment.UserID,
+		comment.Content,
+	).Scan(
+		&comment.ID,
+		&comment.CreatedAt,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

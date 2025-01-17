@@ -8,4 +8,10 @@ const (
 		WHERE c.post_id = $1
 		ORDER BY c.created_at DESC
 	`
+
+	CreateComment = `
+		INSERT INTO comments (post_id, user_id, content)
+		VALUES ($1, $2, $3)
+		RETURNING id, created_at
+	`
 )
