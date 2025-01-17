@@ -34,6 +34,9 @@ type UserStorage interface {
 }
 
 func (r *userStorage) Create(ctx context.Context, user *User) error {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
 	err := r.db.QueryRowContext(
 		ctx,
 		query.CreateUser,
