@@ -16,6 +16,7 @@ type Post struct {
 	Content   string    `json:"content"`
 	UserID    int64     `json:"user_id"`
 	Tags      []string  `json:"tags"`
+	Version   int       `json:"version"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -33,9 +34,13 @@ type postStorage struct {
 
 type PostStorage interface {
 	Create(context.Context, *Post) error
+	GetByID(context.Context, int64) (*Post, error)
 }
 
 func (r *postStorage) Create(ctx context.Context, post *Post) error {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
 	err := r.db.QueryRowContext(
 		ctx,
 		query.CreatePost,
