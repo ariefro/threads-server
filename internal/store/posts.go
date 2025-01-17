@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -59,4 +60,35 @@ func (r *postStorage) Create(ctx context.Context, post *Post) error {
 	}
 
 	return nil
+}
+
+func (r *postStorage) GetByID(ctx context.Context, id int64) (*Post, error) {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	var post Post
+	err := r.db.QueryRowContext(
+		ctx,
+		query.GetPostByID,
+		id,
+	).Scan(
+		&post.ID,
+		&post.UserID,
+		&post.Title,
+		&post.Content,
+		pq.Array(&post.Tags),
+		&post.Version,
+		&post.CreatedAt,
+		&post.UpdatedAt,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	return &post, nil
 }
