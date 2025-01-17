@@ -22,3 +22,7 @@ migrate-up:
 .PHONY: migrate-down
 migrate-down:
 	@migrate -path ${MIGRATIONS_PATH} -database ${DB_DSN} -verbose down
+
+.PHONY: seed
+seed:
+	@go run cmd/migrate/seed/main.go
