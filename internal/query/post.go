@@ -12,4 +12,9 @@ const (
 		FROM posts
 		WHERE id = $1
 	`
+
+	DeletePostByID = `
+		DELETE FROM posts
+		WHERE id = $1
+	`
 )

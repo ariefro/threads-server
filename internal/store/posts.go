@@ -36,13 +36,14 @@ type postStorage struct {
 type PostStorage interface {
 	Create(context.Context, *Post) error
 	GetByID(context.Context, int64) (*Post, error)
+	Delete(context.Context, int64) error
 }
 
-func (r *postStorage) Create(ctx context.Context, post *Post) error {
+func (s *postStorage) Create(ctx context.Context, post *Post) error {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
-	err := r.db.QueryRowContext(
+	err := s.db.QueryRowContext(
 		ctx,
 		query.CreatePost,
 		post.Title,
@@ -62,12 +63,12 @@ func (r *postStorage) Create(ctx context.Context, post *Post) error {
 	return nil
 }
 
-func (r *postStorage) GetByID(ctx context.Context, id int64) (*Post, error) {
+func (s *postStorage) GetByID(ctx context.Context, id int64) (*Post, error) {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
 	var post Post
-	err := r.db.QueryRowContext(
+	err := s.db.QueryRowContext(
 		ctx,
 		query.GetPostByID,
 		id,
@@ -91,4 +92,25 @@ func (r *postStorage) GetByID(ctx context.Context, id int64) (*Post, error) {
 	}
 
 	return &post, nil
+}
+
+func (s *postStorage) Delete(ctx context.Context, id int64) error {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	res, err := s.db.ExecContext(ctx, query.DeletePostByID, id)
+	if err != nil {
+		return err
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return ErrNotFound
+	}
+
+	return nil
 }
