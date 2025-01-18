@@ -31,6 +31,7 @@ type userStorage struct {
 
 type UserStorage interface {
 	Create(context.Context, *User) error
+	GetByID(context.Context, int64) (*User, error)
 }
 
 func (r *userStorage) Create(ctx context.Context, user *User) error {
@@ -54,4 +55,33 @@ func (r *userStorage) Create(ctx context.Context, user *User) error {
 	}
 
 	return nil
+}
+
+func (s *userStorage) GetByID(ctx context.Context, userID int64) (*User, error) {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	user := &User{}
+	err := s.db.QueryRowContext(
+		ctx,
+		query.GetUserByID,
+		userID,
+	).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.Password,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+	if err != nil {
+		switch err {
+		case sql.ErrNoRows:
+			return nil, ErrNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	return user, nil
 }
