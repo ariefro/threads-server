@@ -18,6 +18,7 @@ type Post struct {
 	UserID    int64     `json:"user_id"`
 	Tags      []string  `json:"tags"`
 	Version   int       `json:"version"`
+	User      User      `json:"user"`
 	Comments  []Comment `json:"comments"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -39,6 +40,12 @@ type PostStorage interface {
 	GetByID(context.Context, int64) (*Post, error)
 	Delete(context.Context, int64) error
 	Update(context.Context, *Post) error
+	GetUserFeed(context.Context, int64, PaginatedFeedQuery) ([]PostWithMetadata, error)
+}
+
+type PostWithMetadata struct {
+	Post
+	CommentsCount int `json:"comments_count"`
 }
 
 func (s *postStorage) Create(ctx context.Context, post *Post) error {
@@ -117,7 +124,7 @@ func (s *postStorage) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (s postStorage) Update(ctx context.Context, post *Post) error {
+func (s *postStorage) Update(ctx context.Context, post *Post) error {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
@@ -139,4 +146,40 @@ func (s postStorage) Update(ctx context.Context, post *Post) error {
 	}
 
 	return nil
+}
+
+func (s *postStorage) GetUserFeed(ctx context.Context, userID int64, fq PaginatedFeedQuery) ([]PostWithMetadata, error) {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	query := fmt.Sprintf(query.GetUserFeed, fq.Sort)
+	rows, err := s.db.QueryContext(ctx, query, userID, fq.Limit, fq.Offset)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var feed []PostWithMetadata
+	for rows.Next() {
+		var p PostWithMetadata
+		err := rows.Scan(
+			&p.ID,
+			&p.UserID,
+			&p.Title,
+			&p.Content,
+			&p.Version,
+			pq.Array(&p.Tags),
+			&p.CreatedAt,
+			&p.User.Username,
+			&p.CommentsCount,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		feed = append(feed, p)
+	}
+
+	return feed, nil
 }
