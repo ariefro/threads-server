@@ -153,7 +153,7 @@ func (s *postStorage) GetUserFeed(ctx context.Context, userID int64, fq Paginate
 	defer cancel()
 
 	query := fmt.Sprintf(query.GetUserFeed, fq.Sort)
-	rows, err := s.db.QueryContext(ctx, query, userID, fq.Limit, fq.Offset)
+	rows, err := s.db.QueryContext(ctx, query, userID, fq.Limit, fq.Offset, fq.Search, pq.Array(fq.Tags))
 	if err != nil {
 		return nil, err
 	}

@@ -24,13 +24,17 @@ const (
 		WHERE id = $3 AND version = $4
 		RETURNING version
 	`
+
 	GetUserFeed = `
 		SELECT p.id, p.user_id, p.title, p.content, p.version, p.tags, p.created_at, p.updated_at, u.username, COUNT(c.id) AS comments_count
 		FROM posts p
 		LEFT JOIN comments c ON c.post_id = p.id
 		LEFT JOIN users u ON p.user_id = u.id
 		JOIN followers f ON f.follower_id = p.user_id OR p.user_id = $1
-		WHERE f.user_id = $1 OR p.user_id $1
+		WHERE 
+			f.user_id = $1 AND
+			(p.title ILIKE '%' || $4 || '%' OR p.content ILIKE '%' || $4 || '%') AND
+			(p.tags @> $5 OR $5 = '{}')
 		GROUP BY p.id, u.username
 		ORDER BY p.created_at %s
 		LIMIT $2 OFFSET $3
