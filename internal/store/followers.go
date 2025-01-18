@@ -27,6 +27,7 @@ type followeStorage struct {
 
 type FollowerStorage interface {
 	Follow(ctx context.Context, followerID, userID int64) error
+	Unfollow(ctx context.Context, followerID, userID int64) error
 }
 
 func (s *followeStorage) Follow(ctx context.Context, followerID, userID int64) error {
@@ -41,4 +42,12 @@ func (s *followeStorage) Follow(ctx context.Context, followerID, userID int64) e
 	}
 
 	return nil
+}
+
+func (s *followeStorage) Unfollow(ctx context.Context, followerID, userID int64) error {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	_, err := s.db.ExecContext(ctx, query.DeleteFollowerByID, userID, followerID)
+	return err
 }
