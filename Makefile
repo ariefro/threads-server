@@ -11,8 +11,8 @@ postgres-up:
 postgres-down:
 	docker compose -f docker-compose.yaml --env-file ./development.env down -v
 
-.PHONY: create-migration
-create-migration:
+.PHONY: migration
+migration:
 	@migrate create -seq -ext sql -dir ${MIGRATIONS_PATH} ${filter-out $@,${MAKECMDGOALS}}
 
 .PHONY: migrate-up
