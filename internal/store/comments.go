@@ -13,6 +13,7 @@ type Comment struct {
 	UserID    int64  `json:"user_id"`
 	Content   string `json:"content"`
 	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
 	User      User   `json:"user"`
 }
 
@@ -52,8 +53,12 @@ func (s *commentStorage) GetByPostID(ctx context.Context, postID int64) ([]Comme
 			&c.UserID,
 			&c.Content,
 			&c.CreatedAt,
+			&c.UpdatedAt,
 			&c.User.Username,
+			&c.User.Email,
 			&c.User.ID,
+			&c.User.CreatedAt,
+			&c.User.UpdatedAt,
 		)
 		if err != nil {
 			return nil, err

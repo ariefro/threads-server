@@ -2,7 +2,7 @@ package query
 
 const (
 	GetCommentsByPostID = `
-		SELECT c.id, c.post_id, c.user_id, c.content, c.created_at, users.username, users.id
+		SELECT c.id, c.post_id, c.user_id, c.content, c.created_at, c.updated_at, users.username, users.email, users.id, users.created_at, users.updated_at
 		FROM comments c
 		JOIN users on users.id = c.user_id
 		WHERE c.post_id = $1
