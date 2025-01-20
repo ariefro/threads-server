@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/ariefro/threads-server/internal/db"
 	"github.com/ariefro/threads-server/internal/env"
@@ -35,6 +36,9 @@ func main() {
 			maxIdleTime:  env.DBMaxIdleTime,
 		},
 		env: env.AppEnv,
+		mail: mailConfig{
+			exp: time.Hour * 24 * 3, // 3 days
+		},
 	}
 
 	// Logger
