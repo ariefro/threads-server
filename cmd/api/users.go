@@ -79,6 +79,7 @@ func (app *application) userContextMiddleware(next http.Handler) http.Handler {
 			app.badRequestResponse(w, r, err)
 			return
 		}
+
 		ctx := r.Context()
 		user, err := app.store.Users.GetByID(ctx, userID)
 		if err != nil {

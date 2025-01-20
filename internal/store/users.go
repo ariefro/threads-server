@@ -3,20 +3,12 @@ package store
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	"errors"
 	"time"
 
 	"github.com/ariefro/threads-server/internal/query"
+	"golang.org/x/crypto/bcrypt"
 )
-
-type User struct {
-	ID        int64     `json:"id"`
-	Username  string    `json:"username"`
-	Email     string    `json:"email"`
-	Password  string    `json:"-"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
 
 // NewUserStorage creates a new instance of UserStorage implementation
 func NewUserStorage(db *sql.DB) UserStorage {
@@ -30,20 +22,52 @@ type userStorage struct {
 }
 
 type UserStorage interface {
-	Create(context.Context, *User) error
+	Create(context.Context, *sql.Tx, *User) error
 	GetByID(context.Context, int64) (*User, error)
+	CreateAndInvite(context.Context, *User, string, time.Duration) error
 }
 
-func (r *userStorage) Create(ctx context.Context, user *User) error {
-	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
-	defer cancel()
+var (
+	ErrDuplicateEmail    = errors.New("a user with that email already exists")
+	ErrDuplicateUsername = errors.New("a user with that username already exists")
+)
 
-	err := r.db.QueryRowContext(
+type User struct {
+	ID        int64     `json:"id"`
+	Username  string    `json:"username"`
+	Email     string    `json:"email"`
+	Password  password  `json:"-"`
+	IsActive  bool      `json:"is_active"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type password struct {
+	text *string
+	hash []byte
+}
+
+func (p *password) Set(text string) error {
+	hash, err := bcrypt.GenerateFromPassword([]byte(text), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	p.text = &text
+	p.hash = hash
+	return nil
+}
+
+func (s *userStorage) Create(ctx context.Context, tx *sql.Tx, user *User) error {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel() 
+
+	err := tx.QueryRowContext(
 		ctx,
 		query.CreateUser,
 		user.Username,
 		user.Email,
-		user.Password,
+		user.Password.hash,
 	).Scan(
 		&user.ID,
 		&user.CreatedAt,
@@ -51,7 +75,14 @@ func (r *userStorage) Create(ctx context.Context, user *User) error {
 	)
 
 	if err != nil {
-		return fmt.Errorf("failed to create user: %w", err)
+		switch {
+		case err.Error() == `pq: duplicate key value violates unique constraint "users_email_key"`:
+			return ErrDuplicateEmail
+		case err.Error() == `pq: duplicate key value violates unique constraint "users_username_key"`:
+			return ErrDuplicateUsername
+		default:
+			return err
+		}
 	}
 
 	return nil
@@ -70,7 +101,7 @@ func (s *userStorage) GetByID(ctx context.Context, userID int64) (*User, error) 
 		&user.ID,
 		&user.Username,
 		&user.Email,
-		&user.Password,
+		&user.Password.hash,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
@@ -84,4 +115,29 @@ func (s *userStorage) GetByID(ctx context.Context, userID int64) (*User, error) 
 	}
 
 	return user, nil
+}
+
+func (s *userStorage) CreateAndInvite(ctx context.Context, user *User, token string, invitationExp time.Duration) error {
+	return withTx(s.db, ctx, func(tx *sql.Tx) error {
+		if err := s.Create(ctx, tx, user); err != nil {
+			return err
+		}
+
+		if err := s.createUserInvitation(ctx, tx, token, invitationExp, user.ID); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+func (s *userStorage) createUserInvitation(ctx context.Context, tx *sql.Tx, token string, exp time.Duration, userID int64) error {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	_, err := tx.ExecContext(ctx, query.CreateUserInvitation, token, userID, time.Now().Add(exp))
+	if err != nil {
+		return err
+	}
+	return nil
 }
