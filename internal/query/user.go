@@ -30,4 +30,8 @@ const (
 		SET username = $1, email = $2, is_active = $3
 		WHERE id = $4
 	`
+
+	DeleteUserById = `
+		DELETE FROM users WHERE id = $1
+	`
 )
