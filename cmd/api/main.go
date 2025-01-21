@@ -7,6 +7,7 @@ import (
 
 	"github.com/ariefro/threads-server/internal/db"
 	"github.com/ariefro/threads-server/internal/env"
+	"github.com/ariefro/threads-server/internal/mailer"
 	"github.com/ariefro/threads-server/internal/store"
 	"go.uber.org/zap"
 )
@@ -37,8 +38,12 @@ func main() {
 		},
 		env: env.AppEnv,
 		mail: mailConfig{
-			exp: time.Hour * 24 * 3, // 3 days
+			exp:       time.Hour * 24 * 3, // 3 days
+			fromName:  env.SenderName,
+			fromEmail: env.EmailSender,
+			password:  env.EmailSenderPassword,
 		},
+		frontendURL: env.FrontendURL,
 	}
 
 	// Logger
@@ -62,10 +67,13 @@ func main() {
 
 	store := store.NewStorage(db)
 
+	mailer := mailer.NewGmailSender(cfg.mail.fromName, cfg.mail.fromEmail, cfg.mail.password)
+
 	app := &application{
 		config: cfg,
 		store:  *store,
 		logger: logger,
+		mailer: mailer,
 	}
 
 	mux := app.mount()

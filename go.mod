@@ -7,6 +7,7 @@ require (
 	github.com/go-chi/chi/v5 v5.2.0
 	github.com/go-playground/validator/v10 v10.24.0
 	github.com/google/uuid v1.4.0
+	github.com/jordan-wright/email v4.0.1-0.20210109023952-943e75fe5223+incompatible
 	github.com/lib/pq v1.10.9
 	github.com/spf13/viper v1.19.0
 	go.uber.org/zap v1.27.0
