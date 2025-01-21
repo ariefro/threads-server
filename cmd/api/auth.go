@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"net/http"
 
 	"github.com/ariefro/threads-server/internal/store"
@@ -68,7 +69,34 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		Token: plainToken,
 	}
 
+	templateData := map[string]interface{}{
+		"Username":      payload.Username,
+		"ActivationURL": fmt.Sprintf("%s/confirm/%s", app.config.frontendURL, plainToken),
+	}
+	to := []string{user.Email}
+
 	// send mail
+	err = app.mailer.SendEmail(
+		"Welcome to Threads",
+		"user_invitation.tmpl",
+		templateData,
+		to,
+		nil,
+		nil,
+		nil,
+	)
+	if err != nil {
+		app.logger.Errorw("error sending welcome email", "error", err)
+		// rollback user creation if email fails (SAGA pattern)
+		if err := app.store.Users.Delete(ctx, user.ID); err != nil {
+			app.logger.Errorw("error deleting user", "error", err)
+		}
+
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	app.logger.Infow("Email sent", "status code", http.StatusOK)
 
 	if err := app.jsonResponse(w, http.StatusCreated, userWithToken); err != nil {
 		app.internalServerError(w, r, err)
