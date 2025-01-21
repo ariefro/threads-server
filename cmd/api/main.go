@@ -44,6 +44,12 @@ func main() {
 			password:  env.EmailSenderPassword,
 		},
 		frontendURL: env.FrontendURL,
+		auth: authConfig{
+			basic: basicConfig{
+				user: env.AuthBasicUser,
+				pass: env.AuthBasicPass,
+			},
+		},
 	}
 
 	// Logger
