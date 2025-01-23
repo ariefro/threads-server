@@ -10,12 +10,13 @@ const (
 	GetUserByID = `
 		SELECT id, username, email, password, created_at, updated_at
 		FROM users
-		WHERE id = $1
+		WHERE id = $1 AND is_active = true
 	`
 
-	CreateUserInvitation = `
-		INSERT INTO user_invitations (token, user_id, expiry)
-		VALUES ($1, $2, $3)
+	GetUserByEmail = `
+		SELECT id, username, email, password, created_at, updated_at
+		FROM users
+		WHERE email = $1 AND is_active = true
 	`
 
 	GetUserByInvitation = `

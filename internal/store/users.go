@@ -26,6 +26,7 @@ type userStorage struct {
 type UserStorage interface {
 	Create(context.Context, *sql.Tx, *User) error
 	GetByID(context.Context, int64) (*User, error)
+	GetByEmail(context.Context, string) (*User, error)
 	CreateAndInvite(context.Context, *User, string, time.Duration) error
 	Activate(context.Context, string) error
 	Delete(context.Context, int64) error
@@ -109,6 +110,32 @@ func (s *userStorage) GetByID(ctx context.Context, userID int64) (*User, error) 
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
+	if err != nil {
+		switch err {
+		case sql.ErrNoRows:
+			return nil, ErrNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	return user, nil
+}
+
+func (s *userStorage) GetByEmail(ctx context.Context, email string) (*User, error) {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	user := &User{}
+	err := s.db.QueryRowContext(ctx, query.GetUserByEmail, email).
+		Scan(
+			&user.ID,
+			&user.Username,
+			&user.Email,
+			&user.Password.hash,
+			&user.CreatedAt,
+			&user.UpdatedAt,
+		)
 	if err != nil {
 		switch err {
 		case sql.ErrNoRows:
