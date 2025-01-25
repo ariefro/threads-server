@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/ariefro/threads-server/internal/auth"
 	"github.com/ariefro/threads-server/internal/db"
 	"github.com/ariefro/threads-server/internal/env"
 	"github.com/ariefro/threads-server/internal/mailer"
@@ -75,11 +76,18 @@ func main() {
 
 	mailer := mailer.NewGmailSender(cfg.mail.fromName, cfg.mail.fromEmail, cfg.mail.password)
 
+	jwtAuthenticator := auth.NewJWTAuthenticator(
+		cfg.auth.token.secret,
+		cfg.auth.token.iss,
+		cfg.auth.token.iss,
+	)
+
 	app := &application{
-		config: cfg,
-		store:  *store,
-		logger: logger,
-		mailer: mailer,
+		config:        cfg,
+		store:         *store,
+		logger:        logger,
+		mailer:        mailer,
+		authenticator: jwtAuthenticator,
 	}
 
 	mux := app.mount()
