@@ -43,6 +43,8 @@ type User struct {
 	Email     string    `json:"email"`
 	Password  password  `json:"-"`
 	IsActive  bool      `json:"is_active"`
+	RoleID    int64     `json:"role_id"`
+	Role      Role      `json:"role"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -73,10 +75,10 @@ func (s *userStorage) Create(ctx context.Context, tx *sql.Tx, user *User) error 
 		user.Username,
 		user.Email,
 		user.Password.hash,
+		user.RoleID,
 	).Scan(
 		&user.ID,
 		&user.CreatedAt,
-		&user.UpdatedAt,
 	)
 
 	if err != nil {
@@ -109,6 +111,10 @@ func (s *userStorage) GetByID(ctx context.Context, userID int64) (*User, error) 
 		&user.Password.hash,
 		&user.CreatedAt,
 		&user.UpdatedAt,
+		&user.Role.ID,
+		&user.Role.Name,
+		&user.Role.Level,
+		&user.Role.Description,
 	)
 	if err != nil {
 		switch err {

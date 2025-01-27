@@ -2,15 +2,16 @@ package query
 
 const (
 	CreateUser = `
-		INSERT INTO users (username, email, password)
-		VALUES ($1, $2, $3)
-		RETURNING id, created_at, updated_at
+		INSERT INTO users (username, email, password, role_id)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id, created_at
 	`
 
 	GetUserByID = `
-		SELECT id, username, email, password, created_at, updated_at
+		SELECT users.id, username, email, password, created_at, updated_at, roles.*
 		FROM users
-		WHERE id = $1 AND is_active = true
+		JOIN roles ON (users.role_id = roles.id)
+		WHERE users.id = $1 AND is_active = true
 	`
 
 	GetUserByEmail = `

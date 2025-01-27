@@ -18,6 +18,7 @@ type Storage struct {
 	Posts     PostStorage
 	Comments  CommentStorage
 	Followers FollowerStorage
+	Roles     RoleStorage
 }
 
 func NewStorage(db *sql.DB) *Storage {
@@ -26,6 +27,7 @@ func NewStorage(db *sql.DB) *Storage {
 		Posts:     NewPostStorage(db),
 		Comments:  NewCommentStorage(db),
 		Followers: NewFollowerStorage(db),
+		Roles:     NewRoleStorage(db),
 	}
 }
 
