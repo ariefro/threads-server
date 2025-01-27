@@ -5,14 +5,40 @@ services:
     image: postgres:16.3
     container_name: postgres-db
     environment:
-      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=${DB_DATABASE}
+      - POSTGRES_DB=${DB_NAME}
+    networks:
+      - thread-network
     volumes:
       - db-data:/var/lib/postgresql/data
     ports:
       - "${DB_PORT}:5432"
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    container_name: redis
+    ports:
+      - "6379:6379"
+    command: redis-server --save 60 1 --loglevel warning
+
+  redis-commander:
+    container_name: redis-commander
+    hostname: redis-commander
+    image: rediscommander/redis-commander:latest
+    environment:
+      - REDIS_HOST=redis
+    ports:
+      - "127.0.0.1:8081:8081"
+    depends_on:
+      - redis
+    restart: unless-stopped
+
 volumes:
   db-data:
     name: threads_data
+
+networks:
+  thread-network:
+    driver: bridge

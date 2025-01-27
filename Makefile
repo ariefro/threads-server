@@ -3,12 +3,12 @@ include development.env
 DB_DSN = ${DB_DRIVER}://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}
 MIGRATIONS_PATH = ./cmd/migrate/migrations
 
-.PHONY: postgres-up
-postgres-up:
+.PHONY: services-up
+services-up:
 	docker compose -f docker-compose.yaml --env-file ./development.env up --build
 
-.PHONY: postgres-down
-postgres-down:
+.PHONY: services-down
+services-down:
 	docker compose -f docker-compose.yaml --env-file ./development.env down -v
 
 .PHONY: migration
