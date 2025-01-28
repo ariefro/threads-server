@@ -9,6 +9,7 @@ import (
 	"github.com/ariefro/threads-server/internal/db"
 	"github.com/ariefro/threads-server/internal/env"
 	"github.com/ariefro/threads-server/internal/mailer"
+	"github.com/ariefro/threads-server/internal/ratelimiter"
 	"github.com/ariefro/threads-server/internal/store"
 	"github.com/ariefro/threads-server/internal/store/cache"
 	"github.com/redis/go-redis/v9"
@@ -59,6 +60,11 @@ func main() {
 				pass: env.AuthBasicPass,
 			},
 		},
+		rateLimiter: ratelimiter.Config{
+			RequestsPerTimeFrame: env.RateLimiterRequestCount,
+			TimeFrame:            time.Second * 5,
+			Enabled:              env.RateLimiterEnabled,
+		},
 	}
 
 	// Logger
@@ -89,6 +95,12 @@ func main() {
 		defer rdb.Close()
 	}
 
+	// rate limiter
+	rateLimiter := ratelimiter.NewFixedWindowLimiter(
+		cfg.rateLimiter.RequestsPerTimeFrame,
+		cfg.rateLimiter.TimeFrame,
+	)
+
 	store := store.NewStorage(db)
 	cacheStorage := cache.NewRedisStorage(rdb)
 
@@ -107,6 +119,7 @@ func main() {
 		logger:        logger,
 		mailer:        mailer,
 		authenticator: jwtAuthenticator,
+		rateLimiter:   rateLimiter,
 	}
 
 	mux := app.mount()
