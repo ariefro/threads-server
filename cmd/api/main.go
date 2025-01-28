@@ -53,7 +53,8 @@ func main() {
 			fromEmail: env.EmailSender,
 			password:  env.EmailSenderPassword,
 		},
-		frontendURL: env.FrontendURL,
+		frontendURL:       env.FrontendURL,
+		corsAllowedOrigin: env.CorsAllowedOrigin,
 		auth: authConfig{
 			basic: basicConfig{
 				user: env.AuthBasicUser,

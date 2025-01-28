@@ -16,6 +16,7 @@ import (
 	"github.com/ariefro/threads-server/internal/store/cache"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"go.uber.org/zap"
 )
 
@@ -30,14 +31,15 @@ type application struct {
 }
 
 type config struct {
-	addr        string
-	db          dbConfig
-	env         string
-	mail        mailConfig
-	frontendURL string
-	auth        authConfig
-	redisCfg    redisConfig
-	rateLimiter ratelimiter.Config
+	addr              string
+	db                dbConfig
+	env               string
+	mail              mailConfig
+	frontendURL       string
+	auth              authConfig
+	redisCfg          redisConfig
+	rateLimiter       ratelimiter.Config
+	corsAllowedOrigin string
 }
 
 type redisConfig struct {
@@ -85,6 +87,14 @@ func (app *application) mount() http.Handler {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{app.config.corsAllowedOrigin},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300,
+	}))
 	r.Use(app.RateLimiterMiddleware)
 
 	// Set a timeout value on the request context (ctx), that will signal
