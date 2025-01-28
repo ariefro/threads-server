@@ -26,3 +26,7 @@ migrate-down:
 .PHONY: seed
 seed:
 	@go run cmd/migrate/seed/main.go
+
+PHONY: test
+test:
+	@go test -v ./...
