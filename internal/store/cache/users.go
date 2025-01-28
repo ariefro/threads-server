@@ -23,6 +23,7 @@ type userStore struct {
 type UserStorage interface {
 	Get(context.Context, int64) (*store.User, error)
 	Set(context.Context, *store.User) error
+	Delete(context.Context, int64)
 }
 
 const UserExpTime = time.Minute
@@ -54,4 +55,9 @@ func (s *userStore) Set(ctx context.Context, user *store.User) error {
 	}
 
 	return s.rdb.SetEx(ctx, cacheKey, json, UserExpTime).Err()
+}
+
+func (s *userStore) Delete(ctx context.Context, userID int64) {
+	cacheKey := fmt.Sprintf("user-%d", userID)
+	s.rdb.Del(ctx, cacheKey)
 }

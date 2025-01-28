@@ -71,7 +71,7 @@ func main() {
 	logger := zap.Must(zap.NewProduction()).Sugar()
 	defer logger.Sync()
 
-	// Database
+	// Main Database
 	db, err := db.NewDBConn(
 		cfg.db.driver,
 		cfg.db.dsn,
@@ -101,16 +101,18 @@ func main() {
 		cfg.rateLimiter.TimeFrame,
 	)
 
-	store := store.NewStorage(db)
-	cacheStorage := cache.NewRedisStorage(rdb)
-
+	// mailer
 	mailer := mailer.NewGmailSender(cfg.mail.fromName, cfg.mail.fromEmail, cfg.mail.password)
 
+	// authenticator
 	jwtAuthenticator := auth.NewJWTAuthenticator(
 		cfg.auth.token.secret,
 		cfg.auth.token.iss,
 		cfg.auth.token.iss,
 	)
+
+	store := store.NewStorage(db)
+	cacheStorage := cache.NewRedisStorage(rdb)
 
 	app := &application{
 		config:        cfg,
