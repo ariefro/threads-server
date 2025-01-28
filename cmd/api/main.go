@@ -20,6 +20,23 @@ import (
 
 const version = "0.0.1"
 
+//	@title			Threads API
+//	@description	API for Threads, a social network
+//	@termsOfService	http://swagger.io/terms/
+
+//	@contact.name	API Support
+//	@contact.url	http://www.swagger.io/support
+//	@contact.email	support@swagger.io
+
+//	@license.name	Apache 2.0
+//	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @BasePath					/v1
+//
+// @securityDefinitions.apikey	ApiKeyAuth
+// @in							header
+// @name						Authorization
+// @description
 func main() {
 	env, err := env.LoadConfig()
 	if err != nil {
@@ -42,7 +59,8 @@ func main() {
 			maxIdleConns: env.DBMaxIdleConns,
 			maxIdleTime:  env.DBMaxIdleTime,
 		},
-		env: env.AppEnv,
+		env:    env.AppEnv,
+		apiURL: "localhost:8080",
 		redisCfg: redisConfig{
 			addr:     env.RedisAddress,
 			password: env.RedisPassword,
