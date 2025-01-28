@@ -1,8 +1,10 @@
 package main
 
 import (
+	"expvar"
 	"fmt"
 	"log"
+	"runtime"
 	"time"
 
 	"github.com/ariefro/threads-server/internal/auth"
@@ -40,13 +42,13 @@ func main() {
 			maxIdleConns: env.DBMaxIdleConns,
 			maxIdleTime:  env.DBMaxIdleTime,
 		},
+		env: env.AppEnv,
 		redisCfg: redisConfig{
 			addr:     env.RedisAddress,
 			password: env.RedisPassword,
 			db:       env.RedisDB,
 			enabled:  env.RedisEnabled,
 		},
-		env: env.AppEnv,
 		mail: mailConfig{
 			exp:       time.Hour * 24 * 3, // 3 days
 			fromName:  env.SenderName,
@@ -124,6 +126,15 @@ func main() {
 		authenticator: jwtAuthenticator,
 		rateLimiter:   rateLimiter,
 	}
+
+	// metrics collected
+	expvar.NewString("version").Set(version)
+	expvar.Publish("database", expvar.Func(func() any {
+		return db.Stats()
+	}))
+	expvar.Publish("goroutines", expvar.Func(func() any {
+		return runtime.NumGoroutine()
+	}))
 
 	mux := app.mount()
 
