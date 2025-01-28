@@ -69,13 +69,18 @@ func (s *userStorage) Create(ctx context.Context, tx *sql.Tx, user *User) error 
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
+	role := user.Role.Name
+	if role == "" {
+		role = "user"
+	}
+
 	err := tx.QueryRowContext(
 		ctx,
 		query.CreateUser,
 		user.Username,
 		user.Email,
 		user.Password.hash,
-		user.RoleID,
+		role,
 	).Scan(
 		&user.ID,
 		&user.CreatedAt,
