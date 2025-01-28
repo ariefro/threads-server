@@ -10,6 +10,8 @@ import (
 	"github.com/ariefro/threads-server/internal/env"
 	"github.com/ariefro/threads-server/internal/mailer"
 	"github.com/ariefro/threads-server/internal/store"
+	"github.com/ariefro/threads-server/internal/store/cache"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 
@@ -36,6 +38,12 @@ func main() {
 			maxOpenConns: env.DBMaxOpenConns,
 			maxIdleConns: env.DBMaxIdleConns,
 			maxIdleTime:  env.DBMaxIdleTime,
+		},
+		redisCfg: redisConfig{
+			addr:     env.RedisAddress,
+			password: env.RedisPassword,
+			db:       env.RedisDB,
+			enabled:  env.RedisEnabled,
 		},
 		env: env.AppEnv,
 		mail: mailConfig{
@@ -72,7 +80,17 @@ func main() {
 	defer db.Close()
 	logger.Info("database connection pool established")
 
+	// cache
+	var rdb *redis.Client
+	if cfg.redisCfg.enabled {
+		rdb = cache.NewRedisClient(cfg.redisCfg.addr, cfg.redisCfg.password, cfg.redisCfg.db)
+		logger.Info("redis cache connection established")
+
+		defer rdb.Close()
+	}
+
 	store := store.NewStorage(db)
+	cacheStorage := cache.NewRedisStorage(rdb)
 
 	mailer := mailer.NewGmailSender(cfg.mail.fromName, cfg.mail.fromEmail, cfg.mail.password)
 
@@ -85,6 +103,7 @@ func main() {
 	app := &application{
 		config:        cfg,
 		store:         *store,
+		cacheStorage:  *cacheStorage,
 		logger:        logger,
 		mailer:        mailer,
 		authenticator: jwtAuthenticator,

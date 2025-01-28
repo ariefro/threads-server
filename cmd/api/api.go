@@ -7,6 +7,7 @@ import (
 	"github.com/ariefro/threads-server/internal/auth"
 	"github.com/ariefro/threads-server/internal/mailer"
 	"github.com/ariefro/threads-server/internal/store"
+	"github.com/ariefro/threads-server/internal/store/cache"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/zap"
@@ -15,6 +16,7 @@ import (
 type application struct {
 	config        config
 	store         store.Storage
+	cacheStorage  cache.Storage
 	logger        *zap.SugaredLogger
 	mailer        mailer.EmailSender
 	authenticator auth.Authenticator
@@ -27,6 +29,14 @@ type config struct {
 	mail        mailConfig
 	frontendURL string
 	auth        authConfig
+	redisCfg    redisConfig
+}
+
+type redisConfig struct {
+	addr     string
+	password string
+	db       int
+	enabled  bool
 }
 
 type authConfig struct {

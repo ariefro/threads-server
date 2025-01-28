@@ -27,6 +27,10 @@ type Config struct {
 	SenderName          string `mapstructure:"EMAIL_SENDER_NAME"`
 	EmailSender         string `mapstructure:"EMAIL_SENDER_ADDRESS"`
 	EmailSenderPassword string `mapstructure:"EMAIL_SENDER_PASSWORD"`
+	RedisAddress        string `mapstructure:"REDIS_ADDRESS"`
+	RedisPassword       string `mapstructure:"REDIS_PASSWORD"`
+	RedisDB             int    `mapstructure:"REDIS_DB"`
+	RedisEnabled        bool   `mapstructure:"REDIS_ENABLED"`
 }
 
 func LoadConfig() (config Config, err error) {
