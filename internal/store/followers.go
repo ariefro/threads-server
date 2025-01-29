@@ -26,7 +26,7 @@ type followeStorage struct {
 }
 
 type FollowerStorage interface {
-	Follow(ctx context.Context, followerID, userID int64) error
+	Follow(ctx context.Context, userID, followerID int64) error
 	Unfollow(ctx context.Context, followerID, userID int64) error
 }
 
