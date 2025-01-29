@@ -168,9 +168,10 @@ func (s *postStorage) GetUserFeed(ctx context.Context, userID int64, fq Paginate
 			&p.UserID,
 			&p.Title,
 			&p.Content,
+			&p.CreatedAt,
+			&p.UpdatedAt,
 			&p.Version,
 			pq.Array(&p.Tags),
-			&p.CreatedAt,
 			&p.User.Username,
 			&p.CommentsCount,
 		)
