@@ -13,6 +13,8 @@ type Config struct {
 	AppPort                 string `mapstructure:"PORT"`
 	AuthBasicUser           string `mapstructure:"AUTH_BASIC_USER"`
 	AuthBasicPass           string `mapstructure:"AUTH_BASIC_PASS"`
+	AuthTokenSecret         string `mapstructure:"AUTH_TOKEN_SECRET"`
+	AuthTokenExpired        int    `mapstructure:"AUTH_TOKEN_EXPIRED"`
 	CorsAllowedOrigin       string `mapstructure:"CORS_ALLOWED_ORIGIN"`
 	DBDriver                string `mapstructure:"DB_DRIVER"`
 	DBHost                  string `mapstructure:"DB_HOST"`

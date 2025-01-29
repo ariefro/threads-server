@@ -80,6 +80,10 @@ func main() {
 				user: env.AuthBasicUser,
 				pass: env.AuthBasicPass,
 			},
+			token: tokenConfig{
+				secret: env.AuthTokenSecret,
+				exp:    time.Hour * 24 * time.Duration(env.AuthTokenExpired),
+			},
 		},
 		rateLimiter: ratelimiter.Config{
 			RequestsPerTimeFrame: env.RateLimiterRequestCount,

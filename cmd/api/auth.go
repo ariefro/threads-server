@@ -167,8 +167,8 @@ func (app *application) createTokenHandler(w http.ResponseWriter, r *http.Reques
 		"exp": time.Now().Add(app.config.auth.token.exp).Unix(),
 		"iat": time.Now().Unix(),
 		"nbf": time.Now().Unix(),
-		"iss": app.config.auth.token.iss,
-		"aud": app.config.auth.token.iss,
+		"iss": user.Username,
+		"aud": user.Username,
 	}
 
 	token, err := app.authenticator.GenerateToken(claims)
