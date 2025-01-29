@@ -62,7 +62,12 @@ func (p *password) Set(text string) error {
 
 	p.text = &text
 	p.hash = hash
+
 	return nil
+}
+
+func (p *password) Compare(text string) error {
+	return bcrypt.CompareHashAndPassword(p.hash, []byte(text))
 }
 
 func (s *userStorage) Create(ctx context.Context, tx *sql.Tx, user *User) error {
