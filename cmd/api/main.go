@@ -14,6 +14,7 @@ import (
 	"github.com/ariefro/threads-server/internal/ratelimiter"
 	"github.com/ariefro/threads-server/internal/store"
 	"github.com/ariefro/threads-server/internal/store/cache"
+	"github.com/getsentry/sentry-go"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
@@ -45,6 +46,7 @@ func main() {
 
 	cfg := config{
 		addr: env.AppPort,
+		env:  env.AppEnv,
 		db: dbConfig{
 			driver: env.DBDriver,
 			dsn: fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
@@ -59,22 +61,12 @@ func main() {
 			maxIdleConns: env.DBMaxIdleConns,
 			maxIdleTime:  env.DBMaxIdleTime,
 		},
-		env:    env.AppEnv,
-		apiURL: "localhost:8080",
 		redisCfg: redisConfig{
 			addr:     env.RedisAddress,
 			password: env.RedisPassword,
 			db:       env.RedisDB,
 			enabled:  env.RedisEnabled,
 		},
-		mail: mailConfig{
-			exp:       time.Hour * 24 * 3, // 3 days
-			fromName:  env.SenderName,
-			fromEmail: env.EmailSender,
-			password:  env.EmailSenderPassword,
-		},
-		frontendURL:       env.FrontendURL,
-		corsAllowedOrigin: env.CorsAllowedOrigin,
 		auth: authConfig{
 			basic: basicConfig{
 				user: env.AuthBasicUser,
@@ -90,11 +82,35 @@ func main() {
 			TimeFrame:            time.Second * 5,
 			Enabled:              env.RateLimiterEnabled,
 		},
+		mail: mailConfig{
+			exp:       time.Hour * 24 * 3, // 3 days
+			fromName:  env.SenderName,
+			fromEmail: env.EmailSender,
+			password:  env.EmailSenderPassword,
+		},
+		sentry: sentryConfig{
+			dsn:         env.SentryDsn,
+			sampleRate:  env.SentrySampleRate,
+			environment: env.AppEnv,
+		},
+		frontendURL:       env.FrontendURL,
+		corsAllowedOrigin: env.CorsAllowedOrigin,
 	}
 
 	// Logger
 	logger := zap.Must(zap.NewProduction()).Sugar()
 	defer logger.Sync()
+
+	// Sentry
+	if err := sentry.Init(sentry.ClientOptions{
+		Dsn:              cfg.sentry.dsn,
+		Environment:      cfg.sentry.environment,
+		EnableTracing:    true,
+		Debug:            true,
+		TracesSampleRate: cfg.sentry.sampleRate,
+	}); err != nil {
+		logger.Errorw("sentry initialization failed", "error", err)
+	}
 
 	// Main Database
 	db, err := db.NewDBConn(

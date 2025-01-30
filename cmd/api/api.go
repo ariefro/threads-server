@@ -39,13 +39,13 @@ type config struct {
 	addr              string
 	db                dbConfig
 	env               string
-	apiURL            string
 	mail              mailConfig
 	frontendURL       string
 	auth              authConfig
 	redisCfg          redisConfig
 	rateLimiter       ratelimiter.Config
 	corsAllowedOrigin string
+	sentry            sentryConfig
 }
 
 type redisConfig struct {
@@ -84,6 +84,12 @@ type dbConfig struct {
 	maxOpenConns int
 	maxIdleConns int
 	maxIdleTime  string
+}
+
+type sentryConfig struct {
+	dsn         string
+	sampleRate  float64
+	environment string
 }
 
 func (app *application) mount() http.Handler {
@@ -162,7 +168,7 @@ func (app *application) mount() http.Handler {
 func (app *application) run(mux http.Handler) error {
 	// Docs
 	docs.SwaggerInfo.Version = version
-	docs.SwaggerInfo.Host = app.config.apiURL
+	docs.SwaggerInfo.Host = app.config.frontendURL
 	docs.SwaggerInfo.BasePath = "/v1"
 
 	srv := &http.Server{
