@@ -3,6 +3,8 @@ package main
 import (
 	"net/http"
 
+	"github.com/getsentry/sentry-go"
+
 	"github.com/ariefro/threads-server/internal/store"
 )
 
@@ -50,11 +52,13 @@ func (app *application) getUserFeedHandler(w http.ResponseWriter, r *http.Reques
 
 	feed, err := app.store.Posts.GetUserFeed(ctx, user.ID, fq)
 	if err != nil {
+		sentry.CaptureException(err)
 		app.internalServerError(w, r, err)
 		return
 	}
 
 	if err := app.jsonResponse(w, http.StatusOK, feed); err != nil {
+		sentry.CaptureException(err)
 		app.internalServerError(w, r, err)
 	}
 }

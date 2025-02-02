@@ -4,8 +4,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/ariefro/threads-server/internal/store"
+	"github.com/getsentry/sentry-go"
 	"github.com/go-chi/chi/v5"
+
+	"github.com/ariefro/threads-server/internal/store"
 )
 
 type userKey string
@@ -32,6 +34,7 @@ func (app *application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 		app.badRequestResponse(w, r, err)
 		return
 	}
+
 	user, err := app.getUser(r.Context(), userID)
 	if err != nil {
 		switch err {
@@ -39,12 +42,14 @@ func (app *application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 			app.notFoundResponse(w, r, err)
 			return
 		default:
+			sentry.CaptureException(err)
 			app.internalServerError(w, r, err)
 			return
 		}
 	}
 
 	if err := app.jsonResponse(w, http.StatusOK, user); err != nil {
+		sentry.CaptureException(err)
 		app.internalServerError(w, r, err)
 	}
 }
@@ -82,12 +87,14 @@ func (app *application) followUserHandler(w http.ResponseWriter, r *http.Request
 			app.conflictResponse(w, r, err)
 			return
 		default:
+			sentry.CaptureException(err)
 			app.internalServerError(w, r, err)
 			return
 		}
 	}
 
 	if err := app.jsonResponse(w, http.StatusNoContent, nil); err != nil {
+		sentry.CaptureException(err)
 		app.internalServerError(w, r, err)
 	}
 }
@@ -116,11 +123,13 @@ func (app *application) unfollowUserHandler(w http.ResponseWriter, r *http.Reque
 
 	ctx := r.Context()
 	if err := app.store.Followers.Unfollow(ctx, followerUser.ID, unfollowedID); err != nil {
+		sentry.CaptureException(err)
 		app.internalServerError(w, r, err)
 		return
 	}
 
 	if err := app.jsonResponse(w, http.StatusNoContent, nil); err != nil {
+		sentry.CaptureException(err)
 		app.internalServerError(w, r, err)
 	}
 }
@@ -146,6 +155,7 @@ func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Reque
 		case store.ErrNotFound:
 			app.notFoundResponse(w, r, err)
 		default:
+			sentry.CaptureException(err)
 			app.internalServerError(w, r, err)
 		}
 
@@ -153,6 +163,7 @@ func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	if err := app.jsonResponse(w, http.StatusNoContent, ""); err != nil {
+		sentry.CaptureException(err)
 		app.internalServerError(w, r, err)
 	}
 }

@@ -7,9 +7,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ariefro/threads-server/internal/store"
+	"github.com/getsentry/sentry-go"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+
+	"github.com/ariefro/threads-server/internal/store"
 )
 
 type RegisterUserPayload struct {
@@ -57,6 +59,7 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 
 	// hash the user password
 	if err := user.Password.Set(payload.Password); err != nil {
+		sentry.CaptureException(err)
 		app.internalServerError(w, r, err)
 		return
 	}
@@ -75,6 +78,7 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		case store.ErrDuplicateUsername:
 			app.badRequestResponse(w, r, err)
 		default:
+			sentry.CaptureException(err)
 			app.internalServerError(w, r, err)
 		}
 
@@ -103,7 +107,9 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		nil,
 	)
 	if err != nil {
+		sentry.CaptureException(err)
 		app.logger.Errorw("error sending welcome email", "error", err)
+
 		// rollback user creation if email fails (SAGA pattern)
 		if err := app.store.Users.Delete(ctx, user.ID); err != nil {
 			app.logger.Errorw("error deleting user", "error", err)
@@ -116,6 +122,7 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	app.logger.Infow("Email sent", "status code", http.StatusOK)
 
 	if err := app.jsonResponse(w, http.StatusCreated, userWithToken); err != nil {
+		sentry.CaptureException(err)
 		app.internalServerError(w, r, err)
 	}
 }
@@ -156,6 +163,7 @@ func (app *application) createTokenHandler(w http.ResponseWriter, r *http.Reques
 		case store.ErrNotFound:
 			app.unauthorizedErrorResponse(w, r, err)
 		default:
+			sentry.CaptureException(err)
 			app.internalServerError(w, r, err)
 		}
 
@@ -178,11 +186,13 @@ func (app *application) createTokenHandler(w http.ResponseWriter, r *http.Reques
 
 	token, err := app.authenticator.GenerateToken(claims)
 	if err != nil {
+		sentry.CaptureException(err)
 		app.internalServerError(w, r, err)
 		return
 	}
 
 	if err := app.jsonResponse(w, http.StatusCreated, token); err != nil {
+		sentry.CaptureException(err)
 		app.internalServerError(w, r, err)
 	}
 }

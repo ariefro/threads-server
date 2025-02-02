@@ -7,6 +7,10 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/getsentry/sentry-go"
+	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
+
 	"github.com/ariefro/threads-server/internal/auth"
 	"github.com/ariefro/threads-server/internal/db"
 	"github.com/ariefro/threads-server/internal/env"
@@ -14,9 +18,6 @@ import (
 	"github.com/ariefro/threads-server/internal/ratelimiter"
 	"github.com/ariefro/threads-server/internal/store"
 	"github.com/ariefro/threads-server/internal/store/cache"
-	"github.com/getsentry/sentry-go"
-	"github.com/redis/go-redis/v9"
-	"go.uber.org/zap"
 )
 
 const version = "0.0.1"
@@ -111,6 +112,7 @@ func main() {
 	}); err != nil {
 		logger.Errorw("sentry initialization failed", "error", err)
 	}
+	defer sentry.Flush(2 * time.Second)
 
 	// Main Database
 	db, err := db.NewDBConn(
@@ -121,6 +123,7 @@ func main() {
 		cfg.db.maxIdleTime,
 	)
 	if err != nil {
+		sentry.CaptureException(err)
 		logger.Fatal(err)
 	}
 

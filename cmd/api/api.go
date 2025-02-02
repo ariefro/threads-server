@@ -11,6 +11,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/getsentry/sentry-go"
+	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -112,6 +114,12 @@ func (app *application) mount() http.Handler {
 		r.Use(app.RateLimiterMiddleware)
 	}
 
+	sentryHandler := sentryhttp.New(sentryhttp.Options{
+		Repanic:         true, // Allow panic to be propagated after Sentry captures it
+		WaitForDelivery: true, // Block the request until Sentry confirms the event was sent
+		Timeout:         2,    // Set timeout for event delivery in seconds
+	})
+
 	// Set a timeout value on the request context (ctx), that will signal
 	// through ctx.Done() that the request has timed out and further
 	// processing should be stopped.
@@ -126,39 +134,39 @@ func (app *application) mount() http.Handler {
 
 		r.Route("/posts", func(r chi.Router) {
 			r.Use(app.AuthTokenMiddleware)
-			r.Post("/", app.createPostHandler)
+			r.Post("/", sentryHandler.HandleFunc(app.createPostHandler))
 
 			r.Route("/{postID}", func(r chi.Router) {
 				r.Use(app.postsContextMiddleware)
 
-				r.Get("/", app.getPostHandler)
-				r.Patch("/", app.checkPostOwnership("moderator", app.updatePostHandler))
-				r.Delete("/", app.checkPostOwnership("admin", app.deletePostHandler))
+				r.Get("/", sentryHandler.HandleFunc(app.getPostHandler))
+				r.Patch("/", sentryHandler.HandleFunc(app.checkPostOwnership("moderator", app.updatePostHandler)))
+				r.Delete("/", sentryHandler.HandleFunc(app.checkPostOwnership("admin", app.deletePostHandler)))
 
-				r.Post("/comment", app.createCommentHandler)
+				r.Post("/comment", sentryHandler.HandleFunc(app.createCommentHandler))
 			})
 		})
 
 		r.Route("/users", func(r chi.Router) {
-			r.Put("/activate/{token}", app.activateUserHandler)
+			r.Put("/activate/{token}", sentryHandler.HandleFunc(app.activateUserHandler))
 
 			r.Route("/{userID}", func(r chi.Router) {
 				r.Use(app.AuthTokenMiddleware)
 
-				r.Get("/", app.getUserHandler)
-				r.Put("/follow", app.followUserHandler)
-				r.Put("/unfollow", app.unfollowUserHandler)
+				r.Get("/", sentryHandler.HandleFunc(app.getUserHandler))
+				r.Put("/follow", sentryHandler.HandleFunc(app.followUserHandler))
+				r.Put("/unfollow", sentryHandler.HandleFunc(app.unfollowUserHandler))
 			})
 
 			r.Group(func(r chi.Router) {
 				r.Use(app.AuthTokenMiddleware)
-				r.Get("/feed", app.getUserFeedHandler)
+				r.Get("/feed", sentryHandler.HandleFunc(app.getUserFeedHandler))
 			})
 		})
 
 		r.Route("/authentication", func(r chi.Router) {
-			r.Post("/user", app.registerUserHandler)
-			r.Post("/token", app.createTokenHandler)
+			r.Post("/user", sentryHandler.HandleFunc(app.registerUserHandler))
+			r.Post("/token", sentryHandler.HandleFunc(app.createTokenHandler))
 		})
 	})
 
@@ -199,11 +207,13 @@ func (app *application) run(mux http.Handler) error {
 
 	err := srv.ListenAndServe()
 	if !errors.Is(err, http.ErrServerClosed) {
+		sentry.CaptureException(err)
 		return err
 	}
 
 	err = <-shutdown
 	if err != nil {
+		sentry.CaptureException(err)
 		return err
 	}
 

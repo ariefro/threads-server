@@ -3,6 +3,8 @@ package main
 import (
 	"net/http"
 
+	"github.com/getsentry/sentry-go"
+
 	"github.com/ariefro/threads-server/internal/store"
 )
 
@@ -13,6 +15,7 @@ type CreateCommentPayload struct {
 func (app *application) createCommentHandler(w http.ResponseWriter, r *http.Request) {
 	post, err := getPostFromCtx(r)
 	if err != nil {
+		sentry.CaptureException(err)
 		app.internalServerError(w, r, err)
 		return
 	}
@@ -28,9 +31,11 @@ func (app *application) createCommentHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	user := getUserFromContext(r)
+
 	comment := &store.Comment{
 		PostID:  post.ID,
-		UserID:  1, // todo: change after auth
+		UserID:  user.ID,
 		Content: payload.Content,
 	}
 
@@ -38,6 +43,7 @@ func (app *application) createCommentHandler(w http.ResponseWriter, r *http.Requ
 
 	// Add the new comment to the database
 	if err := app.store.Comments.Create(ctx, comment); err != nil {
+		sentry.CaptureException(err)
 		app.internalServerError(w, r, err)
 		return
 	}
@@ -45,6 +51,7 @@ func (app *application) createCommentHandler(w http.ResponseWriter, r *http.Requ
 	// Retrieve the updated comments for the post
 	comments, err := app.store.Comments.GetByPostID(ctx, post.ID)
 	if err != nil {
+		sentry.CaptureException(err)
 		app.internalServerError(w, r, err)
 		return
 	}
@@ -53,6 +60,7 @@ func (app *application) createCommentHandler(w http.ResponseWriter, r *http.Requ
 	post.Comments = comments
 
 	if err := app.jsonResponse(w, http.StatusCreated, post); err != nil {
+		sentry.CaptureException(err)
 		app.internalServerError(w, r, err)
 		return
 	}

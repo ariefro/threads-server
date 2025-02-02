@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/ariefro/threads-server/internal/store"
+	"github.com/getsentry/sentry-go"
 	"github.com/go-chi/chi/v5"
+
+	"github.com/ariefro/threads-server/internal/store"
 )
 
 type postKey string
@@ -58,11 +60,13 @@ func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request
 	ctx := r.Context()
 
 	if err := app.store.Posts.Create(ctx, post); err != nil {
+		sentry.CaptureException(err)
 		app.internalServerError(w, r, err)
 		return
 	}
 
 	if err := app.jsonResponse(w, http.StatusCreated, post); err != nil {
+		sentry.CaptureException(err)
 		app.internalServerError(w, r, err)
 		return
 	}
@@ -84,12 +88,14 @@ func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request
 func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 	post, err := getPostFromCtx(r)
 	if err != nil {
+		sentry.CaptureException(err)
 		app.internalServerError(w, r, err)
 		return
 	}
 
 	comments, err := app.store.Comments.GetByPostID(r.Context(), post.ID)
 	if err != nil {
+		sentry.CaptureException(err)
 		app.internalServerError(w, r, err)
 		return
 	}
@@ -97,6 +103,7 @@ func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 	post.Comments = comments
 
 	if err := app.jsonResponse(w, http.StatusOK, post); err != nil {
+		sentry.CaptureException(err)
 		app.internalServerError(w, r, err)
 		return
 	}
@@ -119,6 +126,7 @@ func (app *application) deletePostHandler(w http.ResponseWriter, r *http.Request
 	idParam := chi.URLParam(r, "postID")
 	id, err := strconv.ParseInt(idParam, 10, 64)
 	if err != nil {
+		sentry.CaptureException(err)
 		app.internalServerError(w, r, err)
 		return
 	}
@@ -130,6 +138,7 @@ func (app *application) deletePostHandler(w http.ResponseWriter, r *http.Request
 		case errors.Is(err, store.ErrNotFound):
 			app.notFoundResponse(w, r, err)
 		default:
+			sentry.CaptureException(err)
 			app.internalServerError(w, r, err)
 		}
 
@@ -163,6 +172,7 @@ type UpdatePostPayload struct {
 func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request) {
 	post, err := getPostFromCtx(r)
 	if err != nil {
+		sentry.CaptureException(err)
 		app.internalServerError(w, r, err)
 		return
 	}
@@ -187,11 +197,13 @@ func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request
 
 	ctx := r.Context()
 	if err := app.updatePost(ctx, post); err != nil {
+		sentry.CaptureException(err)
 		app.internalServerError(w, r, err)
 		return
 	}
 
 	if err := app.jsonResponse(w, http.StatusOK, post); err != nil {
+		sentry.CaptureException(err)
 		app.internalServerError(w, r, err)
 	}
 }
@@ -202,6 +214,7 @@ func (app *application) postsContextMiddleware(next http.Handler) http.Handler {
 		idParam := chi.URLParam(r, "postID")
 		id, err := strconv.ParseInt(idParam, 10, 64)
 		if err != nil {
+			sentry.CaptureException(err)
 			app.internalServerError(w, r, err)
 			return
 		}
@@ -215,6 +228,7 @@ func (app *application) postsContextMiddleware(next http.Handler) http.Handler {
 			case errors.Is(err, store.ErrNotFound):
 				app.notFoundResponse(w, r, err)
 			default:
+				sentry.CaptureException(err)
 				app.internalServerError(w, r, err)
 			}
 
@@ -238,9 +252,11 @@ func getPostFromCtx(r *http.Request) (*store.Post, error) {
 
 func (app *application) updatePost(ctx context.Context, post *store.Post) error {
 	if err := app.store.Posts.Update(ctx, post); err != nil {
+		sentry.CaptureException(err)
 		return err
 	}
 
 	app.cacheStorage.Users.Delete(ctx, post.ID)
+
 	return nil
 }
